@@ -7,175 +7,18 @@ import java.awt.image.BufferedImage;
 
 import javax.swing.JPanel;
 
+import com.sanoob.whitebalance.constants.Constants;
+
+/*
+ * @author sanoob
+ */
+
 public class ImageOperations {
-	int counti = 0, countj = 0;
-	int rgb;
 
-	public BufferedImage applyTintSeq(BufferedImage image) {
-
-		int height = image.getHeight();
-		int width = image.getWidth();
-		Graphics2D g2 = image.createGraphics();
-		g2.setColor(Color.RED);
-		for (int i = 0; i < height; i++) {
-			for (int j = 0; j < width; j++) {
-				try {
-
-					image.setRGB(j, i, 0xffff0000);
-
-				} catch (Exception e) {
-					System.out.println("Error " + e.getMessage());
-					System.out.println("i: " + i + " j: " + j);
-				}
-			}
-		}
-
-		return image;
-	}
-
-	public BufferedImage applyTintParallel(BufferedImage image) {
-		int height = image.getHeight();
-		int width = image.getWidth();
-		BufferedImage image_ = image;
-		Thread first = new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-				for (int i = 0; i < height / 2; i++) {
-					for (int j = 0; j < width / 2; j++) {
-						image_.setRGB(j, i, 0xffff0000);
-					}
-				}
-
-			}
-		});
-
-		Thread second = new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-				for (int i = 0; i < height / 2; i++) {
-					for (int j = width / 2; j < width; j++) {
-						image_.setRGB(j, i, 0xff00ff00);
-					}
-				}
-
-			}
-		});
-
-		Thread third = new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-				for (int i = height / 2; i < height; i++) {
-					for (int j = 0; j < width / 2; j++) {
-						image_.setRGB(j, i, 0xff0000ff);
-					}
-				}
-
-			}
-		});
-
-		Thread fourth = new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-				for (int i = height / 2; i < height; i++) {
-					for (int j = width / 2; j < width; j++) {
-						image_.setRGB(j, i, 0xff000000);
-					}
-				}
-
-			}
-		});
-
-		first.start();
-		second.start();
-		third.start();
-		fourth.start();
-
-		try {
-			first.join();
-			second.join();
-			third.join();
-			fourth.join();
-		} catch (InterruptedException e) {
-
-			e.printStackTrace();
-		}
-
-		return image_;
-
-	}
-
-	public BufferedImage applyTint(BufferedImage image) {
-
-		int height = image.getHeight();
-		int width = image.getWidth();
-
-		Thread first = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				for (int i = 0; i < height; i++) {
-					for (int j = 0; j < width / 2; j++) {
-						image.setRGB(j, i, 0xffff0000);
-					}
-				}
-			}
-		});
-
-		Thread second = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				for (int i = 0; i < height; i++) {
-					for (int j = width / 2; j < width; j++) {
-
-						image.setRGB(j, i, 0xff00ff00);
-					}
-				}
-			}
-		});
-
-		first.start();
-		second.start();
-		try {
-			first.join();
-			second.join();
-		} catch (Exception e) {
-
-		}
-
-		return image;
-	}
-
-	public static BufferedImage drawRectangleOnImage(BufferedImage image, int x, int y, int width, int height) {
-		BufferedImage image_ = image;
-		Graphics2D g2 = image_.createGraphics();
-		g2.setColor(Color.RED);
-
-		// g2.drawLine(xClick, yClick, xDrag, yDrag);
-		g2.drawRect(x, y, width, height);
-		g2.dispose();
-
-		return image_;
-
-	}
-
-	public static BufferedImage clearImage(BufferedImage image) {
-		BufferedImage image_ = image;
-		Graphics2D g2 = image_.createGraphics();
-		g2.setBackground(new Color(0.0f, 0.0f, 0.0f, 0.0f));
-		g2.clearRect(0, 0, image_.getWidth(), image_.getHeight());
-		g2.dispose();
-		return image_;
-	}
-
-	public static void drawSelection(JPanel panel, Rectangle rectangle) {
-		Graphics2D g2d = (Graphics2D) panel.getGraphics();
-		g2d.setColor(Color.BLUE);
-		g2d.draw(rectangle);
-		panel.repaint();
-	}
+	private static int imageBalanceParam = 0;
+	private static Color white = new Color(255, 255, 255);
+	private static int diffR = 0, diffG = 0, diffB = 0;
+	private static Color normColor;
 
 	public static BufferedImage paintImage(BufferedImage image, BufferedImage copy, Rectangle captureRect) {
 
@@ -194,7 +37,93 @@ public class ImageOperations {
 
 	public static BufferedImage cropImage(BufferedImage image, BufferedImage copy, int x, int y, int width,
 			int height) {
-		return copy.getSubimage(x+1, y+1, width -1, height);
+		return copy.getSubimage(x + 1, y + 1, width - 1, height);
 	}
 
+	public BufferedImage doWhiteBalance(BufferedImage image, BufferedImage selection) {
+
+		getDifference(getParameterFromSelection(selection));
+		
+		return normaliseImage(image);
+
+	}
+
+	private Color getParameterFromSelection(BufferedImage selection) {
+
+		int height = selection.getHeight();
+		int width = selection.getWidth();
+		int sumR = 0, sumG = 0, sumB = 0;
+		int count = 0;
+		Color color;
+
+		for (int i = 0; i < height; i++) {
+			for (int j = 0; j < width; j++) {
+				try {
+					color = new Color(selection.getRGB(j, i));
+					sumR = sumR + color.getRed();
+					sumG = sumG + color.getGreen();
+					sumB = sumB + color.getBlue();
+
+					count++;
+				} catch (Exception e) {
+					System.out.println("Error " + e.getMessage());
+					System.out.println("i: " + i + " j: " + j);
+				}
+			}
+		}
+
+		Color finalColor = new Color((sumR / count), (sumG / count), (sumB / count));
+		//System.out.println(" col avg " + (sumR / count) + " " + (sumG / count) + " " + (sumB / count));
+		return finalColor;
+
+	}
+
+	private void getDifference(Color color) {
+
+		diffR = 255 - color.getRed();
+		diffG = 255 - color.getGreen();
+		diffB = 255 - color.getBlue();
+		//System.out.println(diffR + " " + diffG + " " + diffB);
+	}
+
+	private Color getDifferenceColor(Color color) {
+
+		diffR = 255 - color.getRed();
+		diffG = 255 - color.getGreen();
+		diffB = 255 - color.getBlue();
+		// System.out.println(diffR+" "+diffG+" "+diffB);
+		return new Color(diffR, diffG, diffB);
+	}
+
+	private BufferedImage normaliseImage(BufferedImage image) {
+
+		int height = image.getHeight();
+		int width = image.getWidth();
+		Color color, balColor;
+		int r = 0, g = 0, b = 0, a = 0, dr = 0, dg = 0, db = 0;
+		for (int i = 0; i < height; i++) {
+			for (int j = 0; j < width; j++) {
+				color = new Color(image.getRGB(j, i));
+				dr = (color.getRed() + diffR) - Constants.adjustmentFactor;
+				r = (dr < 256) ? dr : 255;
+				dg = (color.getGreen() + diffG) - Constants.adjustmentFactor;
+				g = (dg < 256) ? dg : 255;
+				db = (color.getBlue() + diffB) - Constants.adjustmentFactor;
+				b = (db < 256) ? db : 255;
+				a = color.getAlpha();
+
+				balColor = new Color(r, g, b, a);
+				image.setRGB(j, i, balColor.getRGB());
+				
+			}
+		}
+		return image;
+	}
+
+	private Color calculateColorDifference(Color color) {
+
+		int difference = white.getRGB() - color.getRGB();
+		return new Color(difference);
+
+	}
 }

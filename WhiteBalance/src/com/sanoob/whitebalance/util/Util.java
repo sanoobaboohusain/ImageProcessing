@@ -5,7 +5,9 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
-
+/*
+ * @author sanoob
+ */
 public class Util {
 	
 	public static Dimension getScreenSize(){
@@ -20,8 +22,5 @@ public class Util {
         g2.dispose();
 	}
 	
-	public static void calculateCoordinate(int x1, int y1, int x2, int y2){
 	
-		
-	}
 }

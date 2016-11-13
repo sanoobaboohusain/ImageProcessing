@@ -30,12 +30,15 @@ public class WhiteBalance {
 
 	public static void main(String[] args) throws Exception {
 
-		String filePath = "/home/sanoob/Desktop/sample_images/image1withoutwhitebalance.png";
+		String filePath = "/home/sanoob/Desktop/sample_images/image_0010.jpg";
 		ImageFrame imageFrame = new ImageFrame();
 		BufferedImage image = ImageIO.read(new File(filePath));
 		BufferedImage copy = new BufferedImage(image.getWidth(), image.getHeight(), image.getType());
+		
 		imageFrame.setImage(image);
-		// Rectangle selection;
+		imageFrame.setFrame();
+		ImageOperations imageOp = new ImageOperations();
+		
 		MouseAdapter mouseAdapter = new MouseAdapter() {
 			@Override
 			public void mouseMoved(MouseEvent e) {
@@ -61,20 +64,20 @@ public class WhiteBalance {
 						crop = ImageOperations.cropImage(image, copy, start.x, start.y, Math.abs(end.x - start.x),
 								Math.abs(end.y - start.y));
 				}
-				if(crop != null){
+				if (crop != null) {
 					JLabel label = new JLabel(new ImageIcon(crop));
 					label.setLayout(new BorderLayout());
 					JPanel panel = new JPanel();
-							panel.setPreferredSize(new Dimension(crop.getWidth(), crop.getHeight()));
+					panel.setPreferredSize(new Dimension(crop.getWidth(), crop.getHeight()));
 					panel.add(label, BorderLayout.CENTER);
 					panel.repaint();
-					
-					JOptionPane.showConfirmDialog(null,
-	                        panel,
-	                        "Selected part ",
-	                        JOptionPane.OK_CANCEL_OPTION,
-	                        JOptionPane.PLAIN_MESSAGE);
-					
+
+					if (JOptionPane.showConfirmDialog(null, panel, "Selected part ", JOptionPane.OK_CANCEL_OPTION,
+							JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
+						imageFrame.setImage(imageOp.doWhiteBalance(image, crop));
+
+						//System.out.println("ok");
+					}
 				}
 
 			}

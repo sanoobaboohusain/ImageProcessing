@@ -2,7 +2,6 @@ package com.sanoob.whitebalance.gui;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.Point;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 
@@ -76,7 +75,6 @@ public class ImageFrame extends JFrame {
 		this.setSize(w, h);
 		this.add(imagePanel);
 		this.repaint();
-		this.setLocationRelativeTo(null);
 		showFrame(true);
 	}
 
@@ -89,6 +87,9 @@ public class ImageFrame extends JFrame {
 		return mouseListener;
 	}
 	 
+	public void setFrame(){
+		this.setLocationRelativeTo(null);
+	}
 	
 	
 
